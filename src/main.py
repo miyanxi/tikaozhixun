@@ -11,7 +11,8 @@ import cozeloop
 import uvicorn
 import time
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
@@ -602,6 +603,93 @@ async def health_check():
 @app.get(path="/graph_parameter")
 async def http_graph_inout_parameter(request: Request):
     return service.graph_inout_schema()
+
+
+# ===== Web Application Routes =====
+import os
+
+WEB_DIR = os.path.join(os.getenv("COZE_WORKSPACE_PATH", "/workspace/projects"), "assets", "web")
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_index():
+    index_path = os.path.join(WEB_DIR, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>Web app not found</h1>", status_code=404)
+
+@app.get("/web/{file_path:path}")
+async def serve_web_static(file_path: str):
+    full_path = os.path.join(WEB_DIR, file_path)
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        media_types = {
+            ".html": "text/html", ".css": "text/css", ".js": "application/javascript",
+            ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".gif": "image/gif", ".svg": "image/svg+xml", ".ico": "image/x-icon",
+            ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg",
+            ".json": "application/json", ".woff": "font/woff", ".woff2": "font/woff2"
+        }
+        ext = os.path.splitext(file_path)[1].lower()
+        media_type = media_types.get(ext, "application/octet-stream")
+        return FileResponse(full_path, media_type=media_type)
+    raise HTTPException(status_code=404, detail="File not found")
+
+
+@app.post("/api/chat")
+async def ai_coach_chat(request: Request):
+    """AI Coach chat endpoint"""
+    try:
+        payload = await request.json()
+        user_message = payload.get("message", "")
+        history = payload.get("history", [])
+
+        if not user_message:
+            return JSONResponse(content={"reply": "请输入你的问题。"})
+
+        from coze_coding_dev_sdk import LLMClient
+        from coze_coding_utils.runtime_ctx.context import new_context as new_ctx
+        from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+
+        ctx = new_ctx(method="ai_coach_chat")
+        client = LLMClient(ctx=ctx)
+
+        workspace_path = os.getenv("COZE_WORKSPACE_PATH", "/workspace/projects")
+        config_path = os.path.join(workspace_path, "config", "agent_llm_config.json")
+        with open(config_path, 'r', encoding='utf-8') as f:
+            cfg = json.load(f)
+
+        messages = [SystemMessage(content=cfg.get("sp", "你是AI体育教练。"))]
+
+        for msg in history[-10:]:
+            if msg.get("role") == "user":
+                messages.append(HumanMessage(content=msg["content"]))
+            elif msg.get("role") == "assistant":
+                messages.append(AIMessage(content=msg["content"]))
+
+        messages.append(HumanMessage(content=user_message))
+
+        response = client.invoke(
+            messages=messages,
+            model=cfg['config'].get("model", "doubao-seed-2-0-lite-260215"),
+            temperature=cfg['config'].get("temperature", 0.7),
+            max_completion_tokens=cfg['config'].get("max_completion_tokens", 4000)
+        )
+
+        reply = ""
+        if isinstance(response.content, str):
+            reply = response.content
+        elif isinstance(response.content, list):
+            if response.content and isinstance(response.content[0], str):
+                reply = " ".join(response.content)
+            else:
+                reply = " ".join(item.get("text", "") for item in response.content if isinstance(item, dict) and item.get("type") == "text")
+        else:
+            reply = str(response.content)
+
+        return JSONResponse(content={"reply": reply})
+    except Exception as e:
+        logger.error(f"AI coach chat error: {e}", exc_info=True)
+        return JSONResponse(content={"reply": "抱歉，AI教练暂时无法回答，请稍后再试。"})
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Start FastAPI server")

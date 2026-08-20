@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>体考智训 - AI助力科学训练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/web/css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8' },
+                        sport: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-primary-600 font-medium text-lg">体考智训</p>
+            <p class="text-gray-400 text-sm mt-1">正在加载...</p>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="bg-white/95 backdrop-blur-sm shadow-sm fixed top-0 w-full z-40 hidden">
+        <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+            <div class="flex items-center cursor-pointer" onclick="showView('home')">
+                <span class="text-xl mr-1">🏃</span>
+                <span class="font-bold text-primary-600 text-lg">体考智训</span>
+            </div>
+            <button onclick="showView('home')" class="text-gray-500 hover:text-primary-600 text-sm flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"></path></svg>
+                首页
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="pt-0">
+        <!-- ==================== HOME VIEW ==================== -->
+        <div id="view-home" class="view">
+            <div class="hero-section">
+                <div class="max-w-6xl mx-auto px-4 py-12 md:py-20 text-center">
+                    <div class="mb-4">
+                        <span class="text-5xl md:text-6xl">🏃‍♂️</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-bold text-white mb-3">体考智训</h1>
+                    <p class="text-lg md:text-xl text-blue-100 mb-2">AI助力科学训练，让体育提升更简单</p>
+                    <p class="text-sm md:text-base text-blue-200 mb-8">面向初中生的智能体育学习、测评与训练平台</p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button onclick="showView('assessment')" class="btn-primary-white">
+                            🏋️ 开始我的体质测评
+                        </button>
+                        <button onclick="startDemoExperience()" class="btn-secondary-white">
+                            ⚡ 一键示例体验
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="max-w-6xl mx-auto px-4 -mt-8 pb-12">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    <div onclick="showView('learning')" class="feature-card">
+                        <div class="feature-icon bg-blue-100 text-blue-600">📖</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">动作学习</h3>
+                        <p class="text-xs text-gray-500 mt-1">标准动作视频教学</p>
+                    </div>
+                    <div onclick="showView('practice')" class="feature-card">
+                        <div class="feature-icon bg-green-100 text-green-600">💪</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">智能练习</h3>
+                        <p class="text-xs text-gray-500 mt-1">个性化练习指导</p>
+                    </div>
+                    <div onclick="showView('assessment')" class="feature-card">
+                        <div class="feature-icon bg-purple-100 text-purple-600">📊</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">体质测评</h3>
+                        <p class="text-xs text-gray-500 mt-1">全面体质能力分析</p>
+                    </div>
+                    <div onclick="navigateAfterData('profile')" class="feature-card">
+                        <div class="feature-icon bg-orange-100 text-orange-600">🎯</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">运动画像</h3>
+                        <p class="text-xs text-gray-500 mt-1">运动能力雷达图</p>
+                    </div>
+                    <div onclick="navigateAfterData('recommendation')" class="feature-card">
+                        <div class="feature-icon bg-red-100 text-red-600">🏅</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">中考项目推荐</h3>
+                        <p class="text-xs text-gray-500 mt-1">智能推荐适合项目</p>
+                    </div>
+                    <div onclick="navigateAfterData('training')" class="feature-card">
+                        <div class="feature-icon bg-teal-100 text-teal-600">📋</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">训练计划</h3>
+                        <p class="text-xs text-gray-500 mt-1">个性化训练方案</p>
+                    </div>
+                    <div onclick="navigateAfterData('homework')" class="feature-card">
+                        <div class="feature-icon bg-yellow-100 text-yellow-600">📝</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">家庭作业</h3>
+                        <p class="text-xs text-gray-500 mt-1">每日体育打卡</p>
+                    </div>
+                    <div onclick="showView('coach')" class="feature-card">
+                        <div class="feature-icon bg-indigo-100 text-indigo-600">🤖</div>
+                        <h3 class="font-semibold text-gray-800 text-sm md:text-base">AI体育教练</h3>
+                        <p class="text-xs text-gray-500 mt-1">智能问答指导</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== LEARNING VIEW ==================== -->
+        <div id="view-learning" class="view hidden">
+            <div class="max-w-6xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">📖 动作学习</h2>
+                <p class="text-gray-500 mb-6">选择你要学习的体育项目，掌握标准动作要领</p>
+                <div id="sportsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- ==================== LEARNING DETAIL VIEW ==================== -->
+        <div id="view-learning-detail" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <button onclick="showView('learning')" class="text-primary-600 hover:text-primary-700 mb-4 inline-flex items-center text-sm">
+                    ← 返回项目列表
+                </button>
+                <div id="learningDetailContent"></div>
+            </div>
+        </div>
+
+        <!-- ==================== PRACTICE VIEW ==================== -->
+        <div id="view-practice" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">💪 智能练习</h2>
+                <p class="text-gray-500 mb-6">选择你想练习的项目，获取专属训练指导</p>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">选择练习项目</label>
+                    <select id="practiceSportSelect" class="input-field" onchange="generatePractice()">
+                        <option value="">-- 请选择项目 --</option>
+                    </select>
+                </div>
+                <div id="practiceContent"></div>
+            </div>
+        </div>
+
+        <!-- ==================== ASSESSMENT VIEW ==================== -->
+        <div id="view-assessment" class="view hidden">
+            <div class="max-w-3xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 体质测评</h2>
+                <p class="text-gray-500 mb-6">填写你的体质信息和体育成绩，获取智能分析报告</p>
+                <form id="assessmentForm" onsubmit="return false;">
+                    <!-- Basic Info -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">👤 基本信息</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">昵称 <span class="text-gray-400 text-xs">(选填)</span></label>
+                                <input type="text" id="f_nickname" class="input-field" placeholder="例如：小健">
+                            </div>
+                            <div>
+                                <label class="form-label">年级 <span class="text-red-500">*</span></label>
+                                <select id="f_grade" class="input-field" required>
+                                    <option value="">请选择年级</option>
+                                    <option value="7">七年级</option>
+                                    <option value="8">八年级</option>
+                                    <option value="9">九年级</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">性别 <span class="text-red-500">*</span></label>
+                                <select id="f_gender" class="input-field" required onchange="updateGenderFields()">
+                                    <option value="">请选择性别</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">年龄 <span class="text-red-500">*</span></label>
+                                <input type="number" id="f_age" class="input-field" placeholder="例如：15" min="12" max="18" required>
+                            </div>
+                            <div>
+                                <label class="form-label">身高（厘米）<span class="text-red-500">*</span></label>
+                                <input type="number" id="f_height" class="input-field" placeholder="例如：170" step="0.1" required>
+                            </div>
+                            <div>
+                                <label class="form-label">体重（千克）<span class="text-red-500">*</span></label>
+                                <input type="number" id="f_weight" class="input-field" placeholder="例如：60" step="0.1" required>
+                            </div>
+                            <div>
+                                <label class="form-label">每周运动次数</label>
+                                <select id="f_exerciseFreq" class="input-field">
+                                    <option value="">请选择</option>
+                                    <option value="0">几乎不运动</option>
+                                    <option value="1">1次</option>
+                                    <option value="2">2次</option>
+                                    <option value="3">3次</option>
+                                    <option value="4">4次</option>
+                                    <option value="5">5次及以上</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">每次运动时间</label>
+                                <select id="f_exerciseDur" class="input-field">
+                                    <option value="">请选择</option>
+                                    <option value="15">15分钟以内</option>
+                                    <option value="30">15-30分钟</option>
+                                    <option value="45">30-45分钟</option>
+                                    <option value="60">45-60分钟</option>
+                                    <option value="90">60分钟以上</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="form-label">希望提高的项目 <span class="text-gray-400 text-xs">(选填)</span></label>
+                            <input type="text" id="f_improve" class="input-field" placeholder="例如：1000米跑和引体向上">
+                        </div>
+                    </div>
+                    <!-- Sports Scores -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">🏅 体育成绩录入</h3>
+                        <p class="text-xs text-gray-400 mb-3">请根据实际测试成绩填写，未测试的项目可以不填</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">50米跑（秒）</label>
+                                <input type="number" id="f_50m" class="input-field" placeholder="例如：7.6" step="0.1">
+                            </div>
+                            <div>
+                                <label class="form-label">立定跳远（厘米）</label>
+                                <input type="number" id="f_longjump" class="input-field" placeholder="例如：220" step="1">
+                            </div>
+                            <div>
+                                <label class="form-label">实心球（米）</label>
+                                <input type="number" id="f_shotput" class="input-field" placeholder="例如：8.5" step="0.1">
+                            </div>
+                            <div>
+                                <label class="form-label">一分钟跳绳（次）</label>
+                                <input type="number" id="f_rope" class="input-field" placeholder="例如：145" step="1">
+                            </div>
+                            <div id="f_pullup_wrap">
+                                <label class="form-label">引体向上（次）<span class="text-gray-400 text-xs">仅男生</span></label>
+                                <input type="number" id="f_pullup" class="input-field" placeholder="例如：6" step="1">
+                            </div>
+                            <div id="f_situp_wrap">
+                                <label class="form-label">一分钟仰卧起坐（次）<span class="text-gray-400 text-xs">仅女生</span></label>
+                                <input type="number" id="f_situp" class="input-field" placeholder="例如：35" step="1">
+                            </div>
+                            <div id="f_1000m_wrap">
+                                <label class="form-label">1000米跑（分钟）<span class="text-gray-400 text-xs">仅男生</span></label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="f_1000m_min" class="input-field flex-1" placeholder="分" min="0" max="10">
+                                    <input type="number" id="f_1000m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59">
+                                </div>
+                            </div>
+                            <div id="f_800m_wrap">
+                                <label class="form-label">800米跑（分钟）<span class="text-gray-400 text-xs">仅女生</span></label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="f_800m_min" class="input-field flex-1" placeholder="分" min="0" max="10">
+                                    <input type="number" id="f_800m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="formError" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-600 text-sm"></div>
+                    <button onclick="submitAssessment()" class="btn-primary w-full mt-4">🚀 开始智能测评</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== RESULTS VIEW ==================== -->
+        <div id="view-results" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 测评结果</h2>
+                <!-- BMI Section -->
+                <div class="result-card mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">📐 BMI指数</h3>
+                    <div class="flex items-center gap-6 flex-wrap">
+                        <div class="text-center">
+                            <div id="bmiValue" class="text-4xl font-bold text-primary-600">--</div>
+                            <div class="text-xs text-gray-500 mt-1">BMI值</div>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <div id="bmiCategory" class="font-semibold text-lg mb-1">--</div>
+                            <div id="bmiAdvice" class="text-sm text-gray-600">--</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3 border-t pt-2">⚠️ 本结果仅用于体育学习与训练参考，不代替医生或专业人员的诊断建议。</p>
+                </div>
+                <!-- Score Analysis -->
+                <div class="result-card mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">🏅 各项目成绩分析</h3>
+                    <div id="scoreAnalysisContent" class="space-y-3"></div>
+                </div>
+                <!-- Radar Chart -->
+                <div class="result-card mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">🎯 运动能力画像</h3>
+                    <div class="flex flex-col md:flex-row gap-6 items-center">
+                        <div class="w-full md:w-1/2 max-w-[300px] mx-auto">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                        <div class="flex-1">
+                            <div id="profileSummary"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Recommendations -->
+                <div class="result-card mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3">🏆 体育中考项目推荐</h3>
+                    <div id="recommendationContent"></div>
+                    <p class="text-xs text-gray-400 mt-3 border-t pt-2">⚠️ 推荐结果根据当前录入数据生成，仅作为项目选择和训练方向参考，具体考试项目及评分规则请以当地教育部门公布的信息为准。</p>
+                </div>
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
+                    <button onclick="generateTrainingPlan()" class="btn-outline">📋 生成训练计划</button>
+                    <button onclick="generateHomework()" class="btn-outline">📝 查看家庭作业</button>
+                    <button onclick="showView('coach')" class="btn-outline">🤖 咨询AI教练</button>
+                    <button onclick="showFullReport()" class="btn-outline">📄 完整报告</button>
+                    <button onclick="resetAssessment()" class="btn-outline">🔄 重新测评</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TRAINING PLAN VIEW ==================== -->
+        <div id="view-training" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">📋 个性化训练计划</h2>
+                <p class="text-gray-500 mb-4">根据你的测评结果量身定制</p>
+                <div class="flex gap-2 mb-4 flex-wrap">
+                    <button onclick="switchPlan(1)" class="plan-tab active" data-plan="1">1周体验</button>
+                    <button onclick="switchPlan(2)" class="plan-tab" data-plan="2">2周提升</button>
+                    <button onclick="switchPlan(4)" class="plan-tab" data-plan="4">4周训练</button>
+                </div>
+                <div id="trainingPlanContent"></div>
+                <div class="mt-6 flex gap-3 flex-wrap">
+                    <button onclick="generateHomework()" class="btn-outline">📝 查看家庭作业</button>
+                    <button onclick="showView('results')" class="btn-outline">← 返回测评结果</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== HOMEWORK VIEW ==================== -->
+        <div id="view-homework" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">📝 家庭体育作业</h2>
+                <p class="text-gray-500 mb-4">每天坚持打卡，养成运动好习惯</p>
+                <div id="homeworkContent"></div>
+                <div class="mt-6 flex gap-3 flex-wrap">
+                    <button onclick="showView('coach')" class="btn-outline">🤖 咨询AI教练</button>
+                    <button onclick="showView('results')" class="btn-outline">← 返回测评结果</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== AI COACH VIEW ==================== -->
+        <div id="view-coach" class="view hidden">
+            <div class="max-w-3xl mx-auto px-4 py-6 flex flex-col" style="height:calc(100vh - 80px);">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">🤖 AI体育教练</h2>
+                <div id="chatMessages" class="flex-1 overflow-y-auto space-y-4 pb-4">
+                    <div class="chat-msg ai">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-bubble">
+                            <p>你好，我是《体考智训》AI体育教练。你可以问我体育动作、训练方法、热身放松和成绩提升方面的问题。</p>
+                            <p class="mt-2 text-xs text-gray-400">⚠️ 请注意，我提供的是一般性体育学习建议，不能代替医生或专业教练。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t pt-3 mt-2">
+                    <div class="flex gap-2">
+                        <input type="text" id="chatInput" class="input-field flex-1" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button onclick="sendChat()" class="btn-primary px-6">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== FULL REPORT VIEW ==================== -->
+        <div id="view-report" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📄 个人体育测评报告</h2>
+                <div id="fullReportContent"></div>
+                <div class="mt-6 flex gap-3 flex-wrap">
+                    <button onclick="generateTrainingPlan()" class="btn-outline">📋 生成训练计划</button>
+                    <button onclick="generateHomework()" class="btn-outline">📝 查看家庭作业</button>
+                    <button onclick="showView('coach')" class="btn-outline">🤖 咨询AI教练</button>
+                    <button onclick="resetAssessment()" class="btn-outline">🔄 重新测评</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== RECOMMENDATION VIEW (standalone) ==================== -->
+        <div id="view-recommendation" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">🏆 体育中考项目推荐</h2>
+                <p class="text-gray-500 mb-4">根据你的测评数据智能推荐</p>
+                <div id="standaloneRecommendation"></div>
+                <div class="mt-6 flex gap-3 flex-wrap">
+                    <button onclick="generateTrainingPlan()" class="btn-outline">📋 生成训练计划</button>
+                    <button onclick="showView('results')" class="btn-outline">← 返回测评结果</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PROFILE VIEW (standalone) ==================== -->
+        <div id="view-profile" class="view hidden">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">🎯 运动能力画像</h2>
+                <p class="text-gray-500 mb-4">基于你的体育成绩生成</p>
+                <div id="standaloneProfile"></div>
+                <div class="mt-6 flex gap-3 flex-wrap">
+                    <button onclick="navigateAfterData('recommendation')" class="btn-outline">🏆 查看项目推荐</button>
+                    <button onclick="showView('results')" class="btn-outline">← 返回测评结果</button>
+                    <button onclick="showView('home')" class="btn-outline">🏠 返回首页</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer id="appFooter" class="bg-white border-t py-4 px-4 text-center hidden">
+        <p class="text-xs text-gray-400 max-w-3xl mx-auto">《体考智训》提供的测评结果和训练建议仅用于体育学习与比赛体验参考，不构成医疗诊断，也不保证实际考试成绩。训练过程中如出现疼痛、头晕、胸闷等不适，请立即停止训练并告知家长。</p>
+    </footer>
+
+    <script src="/web/js/app.js"></script>
+</body>
+</html>
