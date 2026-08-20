@@ -1,12 +1,13 @@
 """
 体考智训 - AI 体育教练 API
 使用 DeepSeek 大语言模型
+Vercel Python Serverless Function
 """
 
 import json
 import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse, parse_qs
+import traceback
+from http.server import BaseHTTPRequestHandler
 
 # DeepSeek API 配置（从环境变量读取）
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
@@ -41,11 +42,12 @@ SYSTEM_PROMPT = """你是《体考智训》AI 体育教练，专门为初中生�
 - 分点列出训练建议"""
 
 
-class ChatHandler(BaseHTTPRequestHandler):
+class handler(BaseHTTPRequestHandler):
+    """Vercel Python Serverless Function 入口（类名必须为 handler）"""
+
     def do_POST(self):
         """处理 POST 请求"""
         try:
-            # 读取请求体
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             data = json.loads(body) if body else {}
@@ -54,16 +56,20 @@ class ChatHandler(BaseHTTPRequestHandler):
             history = data.get("history", [])
 
             if not user_message:
-                self._send_json({"reply": "请输入你的问题～"})
+                self._send_json(200, {"reply": "请输入你的问题～"})
                 return
 
-            # 调用 DeepSeek API
             reply = self._call_deepseek(user_message, history)
-            self._send_json({"reply": reply})
+            self._send_json(200, {"reply": reply})
 
         except Exception as e:
-            print(f"Error: {e}")
-            self._send_json({"reply": "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"})
+            error_type = type(e).__name__
+            print(f"[chat] Error ({error_type}): {e}")
+            self._send_json(200, {"reply": "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"})
+
+    def do_OPTIONS(self):
+        """处理 CORS 预检请求"""
+        self._send_json(200, {})
 
     def _call_deepseek(self, user_message, history):
         """调用 DeepSeek API"""
@@ -75,17 +81,13 @@ class ChatHandler(BaseHTTPRequestHandler):
                 base_url=DEEPSEEK_BASE_URL,
             )
 
-            # 构建消息列表
             messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-            # 添加历史对话（最近 6 轮）
             for msg in history[-6:]:
                 messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
 
-            # 添加当前问题
             messages.append({"role": "user", "content": user_message})
 
-            # 调用 API
             response = client.chat.completions.create(
                 model=DEEPSEEK_MODEL,
                 messages=messages,
@@ -93,108 +95,19 @@ class ChatHandler(BaseHTTPRequestHandler):
                 max_tokens=1000,
             )
 
-            reply = response.choices[0].message.content
-            return reply
+            return response.choices[0].message.content
 
         except Exception as e:
-            print(f"DeepSeek API Error: {e}")
+            error_type = type(e).__name__
+            print(f"[chat] DeepSeek API Error ({error_type}): {e}")
             return "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"
 
-    def _send_json(self, data):
+    def _send_json(self, status_code, data):
         """发送 JSON 响应"""
-        self.send_response(200)
+        self.send_response(status_code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
-
-    def do_OPTIONS(self):
-        """处理 CORS 预检请求"""
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
-
-def handler(request):
-    """Vercel Serverless Function 入口"""
-    parsed_url = urlparse(request.url)
-
-    if parsed_url.path == "/api/chat" and request.method == "POST":
-        content_length = int(request.headers.get("Content-Length", 0))
-        body = request.rfile.read(content_length)
-        data = json.loads(body) if body else {}
-
-        user_message = data.get("message", "").strip()
-        history = data.get("history", [])
-
-        if not user_message:
-            return {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                },
-                "body": json.dumps({"reply": "请输入你的问题～"}, ensure_ascii=False),
-            }
-
-        # 调用 DeepSeek API
-        try:
-            from openai import OpenAI
-
-            client = OpenAI(
-                api_key=DEEPSEEK_API_KEY,
-                base_url=DEEPSEEK_BASE_URL,
-            )
-
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-            for msg in history[-6:]:
-                messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
-
-            messages.append({"role": "user", "content": user_message})
-
-            response = client.chat.completions.create(
-                model=DEEPSEEK_MODEL,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=1000,
-            )
-
-            reply = response.choices[0].message.content
-
-            return {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                },
-                "body": json.dumps({"reply": reply}, ensure_ascii=False),
-            }
-
-        except Exception as e:
-            print(f"DeepSeek API Error: {e}")
-            return {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                },
-                "body": json.dumps({"reply": "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"}, ensure_ascii=False),
-            }
-
-    return {
-        "statusCode": 404,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({"error": "Not found"}, ensure_ascii=False),
-    }
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    server = HTTPServer(("0.0.0.0", port), ChatHandler)
-    print(f"AI Coach API running on port {port}")
-    server.serve_forever()
