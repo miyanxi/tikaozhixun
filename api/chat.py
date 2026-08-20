@@ -1,89 +1,200 @@
-from http.server import BaseHTTPRequestHandler
+"""
+体考智训 - AI 体育教练 API
+使用 DeepSeek 大语言模型
+"""
+
 import json
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 
-SYSTEM_PROMPT = """你是《体考智训》AI 体育教练，专门为初中生提供体育学习和训练指导。"""
+# DeepSeek API 配置（从环境变量读取）
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
 
-FALLBACK_RESPONSES = {
-    "热身": "训练前热身非常重要！建议你做以下热身动作：\n\n1. **慢跑 3-5 分钟**：让身体微微出汗\n2. **关节活动**：转动脚踝、膝盖、关节、肩膀、手腕，每个方向 10 次\n3. **动态拉伸**：高抬腿 20 次、开合跳 15 次、弓步走 10 步\n\n热身时间大约 5-10 分钟，感觉身体微微发热就可以开始正式训练了！加油！💪",
-    "拉伸": "训练后的拉伸放松很重要！建议你做以下拉伸：\n\n1. **大腿前侧拉伸**：单腿站立，另一只手抓住脚踝往后拉，保持 20 秒，换腿\n2. **小腿拉伸**：面对墙，一脚在前一脚在后，后腿伸直，身体前倾，保持 20 秒\n3. **背部拉伸**：坐在地上，双腿伸直，身体前倾摸脚尖，保持 20 秒\n4. **肩部拉伸**：一只手横过胸前，另一只手辅助往身体拉，保持 15 秒\n\n每个动作做 2 组，拉伸时感觉轻微拉扯感即可，不要用力过猛！",
-    "50 米": "提高 50 米跑成绩的关键是爆发力和起跑技术！\n\n**训练建议：**\n1. **起跑练习**：练习蹲踞式起跑，听到信号后快速蹬地，每组 5 次，做 3 组\n2. **高抬腿跑**：原地快速高抬腿，每组 20 次，做 3 组，组间休息 30 秒\n3. **短距离冲刺**：30 米全力冲刺，每组 3 次，组间休息 2 分钟\n4. **力量训练**：深蹲跳 15 次×3 组，增强腿部爆发力\n\n每周练习 2-3 次，坚持 4 周会有明显进步！🏃",
-    "跳远": "提高立定跳远成绩需要爆发力和协调性！\n\n**训练建议：**\n1. **预摆练习**：练习手臂预摆和腿部蹬地的协调，每组 10 次，做 3 组\n2. **蛙跳**：连续蛙跳 10 米×3 组\n3. **收腹跳**：原地跳起后收腹提膝，每组 10 次，做 3 组\n4. **单腿跳**：单腿连续跳 20 米×3 组\n\n**动作要领：**起跳前预摆 2-3 次，起跳时手臂向前上方摆动，空中收腹提膝，落地时小腿前伸。每周练习 2-3 次！🦘",
-    "跳绳": "提高跳绳成绩需要节奏感和耐力！\n\n**训练建议：**\n1. **基础跳**：匀速跳 1 分钟×5 组，组间休息 30 秒\n2. **快速跳**：最快速度跳 30 秒×5 组，组间休息 1 分钟\n3. **耐力跳**：连续跳 3 分钟×3 组\n4. **双摇跳**：尝试双摇跳，每组 10 次，做 3 组\n\n**技巧：**手腕发力，前脚掌着地，保持均匀呼吸。每天练习 10-15 分钟！🪢",
-    "引体向上": "提高引体向上需要背部和手臂力量！\n\n**训练建议：**\n1. **悬垂练习**：双手握杠悬垂，每次 20-30 秒，做 3 组\n2. **辅助引体**：用弹力带辅助，每组 5-8 次，做 3 组\n3. **离心训练**：跳上去后缓慢下降（3-5 秒），每组 5 次，做 3 组\n4. **划船练习**：俯身划船，每组 12 次，做 3 组\n\n**动作要领：**正手握杠与肩同宽，拉起时挺胸下巴过杠，下降时控制速度。每周 2-3 次！💪",
-    "仰卧起坐": "提高仰卧起坐需要核心力量！\n\n**训练建议：**\n1. **标准仰卧起坐**：每组 20 次，做 3 组\n2. **平板支撑**：每次 30-60 秒，做 3 组\n3. **卷腹**：仰卧只抬起肩背，每组 15 次，做 3 组\n4. **俄罗斯转体**：坐姿左右转体，每组 20 次，做 3 组\n\n**注意：**双手放胸前或耳侧，不要抱头，避免颈部受伤！🏋️",
-    "长跑": "提高 1000 米/800 米成绩需要耐力和节奏！\n\n**训练建议：**\n1. **慢跑耐力**：匀速跑 15-20 分钟，每周 2 次\n2. **间歇跑**：400 米快跑 + 200 米慢走，重复 4-6 组\n3. **节奏跑**：用比赛配速跑 600-800 米，每周 1 次\n4. **力量训练**：深蹲、弓步走\n\n**技巧：**起跑不要冲太猛，呼吸两步一吸两步一呼，最后 200 米加速冲刺！‍♂️",
-    "实心球": "提高实心球成绩需要全身协调发力！\n\n**训练建议：**\n1. **持球练习**：双手持球于头后，练习发力顺序，每组 10 次，做 3 组\n2. **跪姿投掷**：跪姿投掷实心球，每组 8 次，做 3 组\n3. **力量训练**：俯卧撑 15 次×3 组\n4. **核心训练**：平板支撑 30 秒×3 组\n\n**动作要领：**双手持球于头后上方，蹬地、收腹、挥臂依次发力，出手角度约 40-45 度！🎯",
-    "速度": "提高速度需要爆发力和技术！\n\n**训练建议：**\n1. **起跑反应**：练习听信号快速启动，每组 5 次\n2. **高抬腿**：快速高抬腿 20 次×3 组\n3. **冲刺跑**：30 米全力冲刺×3 组\n4. **力量训练**：深蹲跳、弓步跳\n\n每周 2-3 次，坚持 4 周见效！🏃",
-    "耐力": "提高耐力需要循序渐进！\n\n**训练建议：**\n1. **慢跑**：匀速跑 15-20 分钟，每周 2 次\n2. **间歇训练**：快跑 400 米 + 慢走 200 米，重复 4-6 组\n3. **游泳/骑车**：交叉训练，每次 30 分钟\n\n**关键：**不要一开始就跑太快，保持能说话的配速！🏊",
-    "力量": "提高力量需要科学训练！\n\n**训练建议：**\n1. **俯卧撑**：15 次×3 组\n2. **深蹲**：20 次×3 组\n3. **平板支撑**：30-60 秒×3 组\n4. **引体向上**：5-8 次×3 组\n\n**注意：**动作质量比数量重要，感觉疼痛立即停止！💪",
-    "爆发力": "提高爆发力需要快速发力训练！\n\n**训练建议：**\n1. **深蹲跳**：15 次×3 组\n2. **蛙跳**：10 米×3 组\n3. **药球投掷**：10 次×3 组\n4. **冲刺跑**：30 米×3 组\n\n**关键：**每个动作都要全力快速完成！⚡"
-}
+# 系统提示词
+SYSTEM_PROMPT = """你是《体考智训》AI 体育教练，专门为初中生提供体育学习和训练建议。
 
-def get_fallback_response(message):
-    """根据关键词返回预设回答"""
-    message_lower = message.lower()
-    for keyword, response in FALLBACK_RESPONSES.items():
-        if keyword in message_lower:
-            return response
-    return """你好！我是《体考智训》AI 体育教练。
+## 角色定位
+- 专业、友好、鼓励性的体育教练
+- 熟悉初中体育中考项目（50 米跑、立定跳远、实心球、跳绳、引体向上、仰卧起坐、1000 米/800 米跑）
+- 了解青少年体质健康标准和训练方法
 
-我可以帮你解答：
-- 🏃 50 米跑技巧
-- 🦘 立定跳远训练
-- 🎯 实心球投掷
--  跳绳方法
-- 💪 引体向上/仰卧起坐
-- 🏃‍♂️ 1000 米/800 米长跑
-- 🧘 热身和拉伸
-- 📋 训练计划安排
+## 回答原则
+1. **先回答核心问题**：直接给出关键建议，不要绕弯子
+2. **具体可操作**：每次推荐 2-4 个具体方法，包含次数、组数、休息时间
+3. **适合初中生**：训练强度适中，不安排危险动作和极端训练
+4. **积极鼓励**：使用正面语言，避免"很差""不合格"等打击性表达
+5. **安全第一**：提醒热身、拉伸，出现疼痛/头晕/胸闷时立即停止训练并告知家长
 
-请告诉我你想了解哪个方面！
+## 禁止事项
+- 不进行医疗诊断
+- 不提供减肥药物、补剂或极端节食建议
+- 不保证成绩一定提高
+- 不替代医生或专业教练
 
-⚠️ 训练时如出现疼痛、头晕等不适，请立即停止并告知家长。"""
+## 回答格式
+- 使用简洁清晰的语言
+- 适当使用 emoji 增加亲和力
+- 重要信息用粗体标注
+- 分点列出训练建议"""
 
 
-class handler(BaseHTTPRequestHandler):
+class ChatHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        """处理 POST 请求"""
         try:
             # 读取请求体
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = self.rfile.read(content_length).decode('utf-8')
-            data = json.loads(body)
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            data = json.loads(body) if body else {}
 
-            message = data.get('message', '')
-            history = data.get('history', [])
+            user_message = data.get("message", "").strip()
+            history = data.get("history", [])
 
-            # 使用预设回答（不依赖外部 API）
-            response_text = get_fallback_response(message)
+            if not user_message:
+                self._send_json({"reply": "请输入你的问题～"})
+                return
 
-            # 返回响应
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-
-            response = {
-                'reply': response_text,
-                'success': True
-            }
-            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            # 调用 DeepSeek API
+            reply = self._call_deepseek(user_message, history)
+            self._send_json({"reply": reply})
 
         except Exception as e:
-            self.send_response(500)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
+            print(f"Error: {e}")
+            self._send_json({"reply": "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"})
 
-            error_response = {
-                'reply': f'抱歉，出现了错误：{str(e)}',
-                'success': False
-            }
-            self.wfile.write(json.dumps(error_response, ensure_ascii=False).encode('utf-8'))
+    def _call_deepseek(self, user_message, history):
+        """调用 DeepSeek API"""
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(
+                api_key=DEEPSEEK_API_KEY,
+                base_url=DEEPSEEK_BASE_URL,
+            )
+
+            # 构建消息列表
+            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+            # 添加历史对话（最近 6 轮）
+            for msg in history[-6:]:
+                messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+
+            # 添加当前问题
+            messages.append({"role": "user", "content": user_message})
+
+            # 调用 API
+            response = client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000,
+            )
+
+            reply = response.choices[0].message.content
+            return reply
+
+        except Exception as e:
+            print(f"DeepSeek API Error: {e}")
+            return "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"
+
+    def _send_json(self, data):
+        """发送 JSON 响应"""
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
     def do_OPTIONS(self):
         """处理 CORS 预检请求"""
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+
+
+def handler(request):
+    """Vercel Serverless Function 入口"""
+    parsed_url = urlparse(request.url)
+
+    if parsed_url.path == "/api/chat" and request.method == "POST":
+        content_length = int(request.headers.get("Content-Length", 0))
+        body = request.rfile.read(content_length)
+        data = json.loads(body) if body else {}
+
+        user_message = data.get("message", "").strip()
+        history = data.get("history", [])
+
+        if not user_message:
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+                "body": json.dumps({"reply": "请输入你的问题～"}, ensure_ascii=False),
+            }
+
+        # 调用 DeepSeek API
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(
+                api_key=DEEPSEEK_API_KEY,
+                base_url=DEEPSEEK_BASE_URL,
+            )
+
+            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+            for msg in history[-6:]:
+                messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+
+            messages.append({"role": "user", "content": user_message})
+
+            response = client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000,
+            )
+
+            reply = response.choices[0].message.content
+
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+                "body": json.dumps({"reply": reply}, ensure_ascii=False),
+            }
+
+        except Exception as e:
+            print(f"DeepSeek API Error: {e}")
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+                "body": json.dumps({"reply": "抱歉，AI 教练暂时无法回答。请稍后再试，或直接查看其他功能模块的训练建议！"}, ensure_ascii=False),
+            }
+
+    return {
+        "statusCode": 404,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({"error": "Not found"}, ensure_ascii=False),
+    }
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    server = HTTPServer(("0.0.0.0", port), ChatHandler)
+    print(f"AI Coach API running on port {port}")
+    server.serve_forever()
