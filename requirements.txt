@@ -1,4 +1,2 @@
-coze-coding-dev-sdk
-langchain-core
-langchain-openai
-langgraph
+coze-coding-dev-sdk>=0.1.0
+langchain-core>=0.1.0
