@@ -1,0 +1,16 @@
+# Vercel 部署时忽略以下文件
+pyproject.toml
+uv.lock
+.venv/
+__pycache__/
+*.pyc
+src/
+tests/
+docs/
+scripts/
+.coze/
+AGENT.md
+README.md
+DEPLOY.md
+.gitignore
+assets/image_*.png
