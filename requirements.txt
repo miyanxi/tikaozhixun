@@ -1,1 +1,2 @@
-openai>=1.0.0
+# Vercel Serverless Function 依赖
+# 使用 Python 标准库调用 DeepSeek API，无需额外依赖
