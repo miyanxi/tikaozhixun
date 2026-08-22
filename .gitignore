@@ -1,5 +1,6 @@
 node_modules
 .tools/
+.codex-temp/
 dist
 .DS_Store
 *.swp
