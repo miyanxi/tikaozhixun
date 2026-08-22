@@ -1,4 +1,6 @@
 node_modules
+.tools/
+.codex-temp/
 dist
 .DS_Store
 *.swp
@@ -29,6 +31,12 @@ __pycache__/
 *.f4v
 *.rmvb
 *.vob
+
+# 原始教学素材只保留在本地资料目录；网站使用 public/videos 中压缩后的版本。
+/项目教学视频/
+!/public/
+!/public/videos/
+!/public/videos/*.mp4
 
 # 归档文件
 *.iso

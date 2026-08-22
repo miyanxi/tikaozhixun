@@ -157,8 +157,8 @@
                         <h3 class="form-section-title">👤 基本信息</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="form-label">昵称 <span class="text-gray-400 text-xs">(选填)</span></label>
-                                <input type="text" id="f_nickname" class="input-field" placeholder="例如：小健">
+                                <label class="form-label">姓名 <span class="text-red-500">*</span></label>
+                                <input type="text" id="f_nickname" class="input-field" placeholder="例如：张同学" required>
                             </div>
                             <div>
                                 <label class="form-label">年级 <span class="text-red-500">*</span></label>
@@ -170,16 +170,16 @@
                                 </select>
                             </div>
                             <div>
+                                <label class="form-label">班级 <span class="text-red-500">*</span></label>
+                                <input type="text" id="f_class" class="input-field" placeholder="例如：九（1）班" required>
+                            </div>
+                            <div>
                                 <label class="form-label">性别 <span class="text-red-500">*</span></label>
                                 <select id="f_gender" class="input-field" required onchange="updateGenderFields()">
                                     <option value="">请选择性别</option>
                                     <option value="male">男</option>
                                     <option value="female">女</option>
                                 </select>
-                            </div>
-                            <div>
-                                <label class="form-label">年龄 <span class="text-red-500">*</span></label>
-                                <input type="number" id="f_age" class="input-field" placeholder="例如：15" min="12" max="18" required>
                             </div>
                             <div>
                                 <label class="form-label">身高（厘米）<span class="text-red-500">*</span></label>
@@ -189,79 +189,44 @@
                                 <label class="form-label">体重（千克）<span class="text-red-500">*</span></label>
                                 <input type="number" id="f_weight" class="input-field" placeholder="例如：60" step="0.1" required>
                             </div>
-                            <div>
-                                <label class="form-label">每周运动次数</label>
-                                <select id="f_exerciseFreq" class="input-field">
-                                    <option value="">请选择</option>
-                                    <option value="0">几乎不运动</option>
-                                    <option value="1">1次</option>
-                                    <option value="2">2次</option>
-                                    <option value="3">3次</option>
-                                    <option value="4">4次</option>
-                                    <option value="5">5次及以上</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="form-label">每次运动时间</label>
-                                <select id="f_exerciseDur" class="input-field">
-                                    <option value="">请选择</option>
-                                    <option value="15">15分钟以内</option>
-                                    <option value="30">15-30分钟</option>
-                                    <option value="45">30-45分钟</option>
-                                    <option value="60">45-60分钟</option>
-                                    <option value="90">60分钟以上</option>
-                                </select>
-                            </div>
                         </div>
-                        <div class="mt-4">
-                            <label class="form-label">希望提高的项目 <span class="text-gray-400 text-xs">(选填)</span></label>
-                            <input type="text" id="f_improve" class="input-field" placeholder="例如：1000米跑和引体向上">
+                        <div class="mt-4 flex gap-2 flex-wrap" id="studentProfileActions">
+                            <button type="button" onclick="saveStudentProfile()" class="btn-outline">💾 保存学生档案</button>
+                            <button type="button" onclick="showStudentManager()" class="btn-outline">👥 切换 / 管理学生</button>
+                            <button type="button" onclick="showHistory()" class="btn-outline">🕘 查看历史成绩</button>
                         </div>
                     </div>
                     <!-- Sports Scores -->
                     <div class="form-section">
                         <h3 class="form-section-title">🏅 体育成绩录入</h3>
-                        <p class="text-xs text-gray-400 mb-3">请根据实际测试成绩填写，未测试的项目可以不填</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="form-label">50米跑（秒）</label>
-                                <input type="number" id="f_50m" class="input-field" placeholder="例如：7.6" step="0.1">
-                            </div>
-                            <div>
-                                <label class="form-label">立定跳远（厘米）</label>
-                                <input type="number" id="f_longjump" class="input-field" placeholder="例如：220" step="1">
-                            </div>
-                            <div>
-                                <label class="form-label">实心球（米）</label>
-                                <input type="number" id="f_shotput" class="input-field" placeholder="例如：8.5" step="0.1">
-                            </div>
-                            <div>
-                                <label class="form-label">一分钟跳绳（次）</label>
-                                <input type="number" id="f_rope" class="input-field" placeholder="例如：145" step="1">
-                            </div>
-                            <div id="f_pullup_wrap">
-                                <label class="form-label">引体向上（次）<span class="text-gray-400 text-xs">仅男生</span></label>
-                                <input type="number" id="f_pullup" class="input-field" placeholder="例如：6" step="1">
-                            </div>
-                            <div id="f_situp_wrap">
-                                <label class="form-label">一分钟仰卧起坐（次）<span class="text-gray-400 text-xs">仅女生</span></label>
-                                <input type="number" id="f_situp" class="input-field" placeholder="例如：35" step="1">
-                            </div>
-                            <div id="f_1000m_wrap">
-                                <label class="form-label">1000米跑（分钟）<span class="text-gray-400 text-xs">仅男生</span></label>
-                                <div class="flex gap-2">
-                                    <input type="number" id="f_1000m_min" class="input-field flex-1" placeholder="分" min="0" max="10">
-                                    <input type="number" id="f_1000m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59">
+                        <p class="text-xs text-gray-500 mb-3">南京中考三个选项组的 6 个项目和坐位体前屈均须填写。性别会决定长跑与选项三项目。</p>
+                        <div class="space-y-4">
+                            <fieldset class="assessment-group">
+                                <legend>选项一 · 最高14分</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="form-label">3分钟跳绳（个）<span class="text-red-500">*</span></label><input type="number" id="f_rope" class="input-field" placeholder="例如：320" step="1" required></div>
+                                    <div id="f_1000m_wrap"><label class="form-label">1000米（分、秒）<span class="text-red-500">*</span></label><div class="flex gap-2"><input type="number" id="f_1000m_min" class="input-field flex-1" placeholder="分" min="0" max="14"><input type="number" id="f_1000m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59"></div></div>
+                                    <div id="f_800m_wrap"><label class="form-label">800米（分、秒）<span class="text-red-500">*</span></label><div class="flex gap-2"><input type="number" id="f_800m_min" class="input-field flex-1" placeholder="分" min="0" max="14"><input type="number" id="f_800m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59"></div></div>
                                 </div>
-                            </div>
-                            <div id="f_800m_wrap">
-                                <label class="form-label">800米跑（分钟）<span class="text-gray-400 text-xs">仅女生</span></label>
-                                <div class="flex gap-2">
-                                    <input type="number" id="f_800m_min" class="input-field flex-1" placeholder="分" min="0" max="10">
-                                    <input type="number" id="f_800m_sec" class="input-field flex-1" placeholder="秒" min="0" max="59">
+                            </fieldset>
+                            <fieldset class="assessment-group">
+                                <legend>选项二 · 最高13分</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="form-label">50米跑（秒）<span class="text-red-500">*</span></label><input type="number" id="f_50m" class="input-field" placeholder="例如：7.6" step="0.1" required></div>
+                                    <div><label class="form-label">立定跳远（米）<span class="text-red-500">*</span></label><input type="number" id="f_longjump" class="input-field" placeholder="例如：2.05" step="0.01" required></div>
                                 </div>
-                            </div>
+                            </fieldset>
+                            <fieldset class="assessment-group">
+                                <legend>选项三 · 最高13分</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="form-label">投掷实心球（米）<span class="text-red-500">*</span></label><input type="number" id="f_shotput" class="input-field" placeholder="例如：8.5" step="0.1" required></div>
+                                    <div id="f_pullup_wrap"><label class="form-label">引体向上（次）<span class="text-red-500">*</span></label><input type="number" id="f_pullup" class="input-field" placeholder="例如：6" step="1"></div>
+                                    <div id="f_situp_wrap"><label class="form-label">一分钟仰卧起坐（次）<span class="text-red-500">*</span></label><input type="number" id="f_situp" class="input-field" placeholder="例如：35" step="1"></div>
+                                </div>
+                            </fieldset>
+                            <fieldset class="assessment-group assessment-group-flex"><legend>体质测试项目</legend><div><label class="form-label">坐位体前屈（厘米）<span class="text-red-500">*</span></label><input type="number" id="f_sitforward" class="input-field" placeholder="例如：14.5" step="0.1" required></div></fieldset>
                         </div>
+                        <p class="mt-4 text-xs text-blue-700 bg-blue-50 rounded-lg p-3">坐位体前屈为体质测试项目，不计入南京中考总分。</p>
                     </div>
                     <div id="formError" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-red-600 text-sm"></div>
                     <button onclick="submitAssessment()" class="btn-primary w-full mt-4">🚀 开始智能测评</button>
@@ -427,6 +392,8 @@
         <p class="text-xs text-gray-400 max-w-3xl mx-auto">《体考智训》提供的测评结果和训练建议仅用于体育学习与比赛体验参考，不构成医疗诊断，也不保证实际考试成绩。训练过程中如出现疼痛、头晕、胸闷等不适，请立即停止训练并告知家长。</p>
     </footer>
 
+    <script src="/js/assessment-engine.js"></script>
+    <script src="/js/training-engine.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>
